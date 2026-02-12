@@ -1,0 +1,133 @@
+services:
+
+  # ===============================
+  # Laravel Application Container
+  # ===============================
+  app:
+    # Build from local Dockerfile
+    build: .
+    
+    # Custom container name
+    container_name: laravel_app
+
+    # Set working directory inside container
+    working_dir: /var/www
+
+    # Mount project files into container
+    # This allows live editing without rebuilding container
+    volumes:
+      - .:/var/www
+
+    # Expose port 8000
+    # Access Laravel at http://localhost:8000
+    ports:
+      - "8000:8000"
+
+    # Ensure database and redis start first
+    depends_on:
+      - db
+      - redis
+
+    # Start Laravel development server
+    # 0.0.0.0 is required so Docker can expose it
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+
+
+  # ===============================
+  # MySQL Database Container
+  # ===============================
+  db:
+    # Use existing local MySQL image
+    # IMPORTANT: Version should match your project requirements
+    image: mysql:latest
+
+    # Prevent Docker from pulling new image
+    # Useful when you already have correct version locally
+    pull_policy: never
+
+    container_name: laravel_db
+
+    # MySQL environment configuration
+    environment:
+      # Database name
+      MYSQL_DATABASE: flash
+
+      # Root password
+      MYSQL_ROOT_PASSWORD: root
+
+      # Custom user for Laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: password
+
+    # Persist database data even if container stops
+    volumes:
+      - dbdata:/var/lib/mysql
+
+    # Expose MySQL port (optional, mainly for local access)
+    ports:
+      - "3306:3306"
+
+
+
+  # ===============================
+  # phpMyAdmin (Database GUI)
+  # ===============================
+  phpmyadmin:
+    image: phpmyadmin:latest
+    pull_policy: never
+
+    container_name: phpmyadmin
+
+    # Access phpMyAdmin at http://localhost:8080
+    ports:
+      - "8080:80"
+
+    # Tell phpMyAdmin which database container to connect to
+    environment:
+      PMA_HOST: db
+
+    depends_on:
+      - db
+
+
+  # ===============================
+  # Redis Container
+  # ===============================
+  redis:
+    image: redis:latest
+    pull_policy: never
+
+    container_name: redis
+
+    # Default Redis port
+    ports:
+      - "6379:6379"
+
+
+
+  # ===============================
+  # Node Container (Frontend / Vite)
+  # ===============================
+  node:
+    image: node:latest
+    pull_policy: never
+
+    container_name: node
+
+    # Working directory for frontend operations
+    working_dir: /app
+
+    # Mount project files
+    volumes:
+      - .:/app
+
+    # Keep container running interactively
+    tty: true
+
+# ===============================
+# Named Volumes
+# ===============================
+volumes:
+  # Database persistent storage
+  dbdata:
