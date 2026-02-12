@@ -51,7 +51,7 @@ services:
     # MySQL environment configuration
     environment:
       # Database name
-      MYSQL_DATABASE: flash
+      MYSQL_DATABASE: laravel_db
 
       # Root password
       MYSQL_ROOT_PASSWORD: root
